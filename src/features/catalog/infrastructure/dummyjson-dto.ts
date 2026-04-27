@@ -1,4 +1,4 @@
-export interface DummyJsonProductDto {
+export type DummyJsonProductDto = {
   id: number;
   sku: string;
   title: string;
@@ -8,17 +8,17 @@ export interface DummyJsonProductDto {
   brand?: string;
   thumbnail: string;
   images: string[];
-}
+};
 
-export interface DummyJsonProductsResponseDto {
+export type DummyJsonProductsResponseDto = {
   products: DummyJsonProductDto[];
   total: number;
   skip: number;
   limit: number;
-}
+};
 
-export interface DummyJsonCategoryDto {
+export type DummyJsonCategoryDto = {
   slug: string;
   name: string;
   url: string;
-}
+};
