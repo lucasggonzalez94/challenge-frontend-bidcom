@@ -34,6 +34,8 @@ npm install
 
 - Home (`/`) con listado de 20 productos.
 - Header con logo de Bidcom y buscador.
+- Filtro por categorias en Home mediante dropdown (`/?category=slug`).
+- Paginacion en Home y Search (`?page=N`) manteniendo filtros activos.
 - Busqueda por URL (`/search?s=...`) via formulario GET.
 - Resolucion de busqueda por termino libre y por categoria.
 - Empty state con mensaje y 5 categorias recomendadas.
@@ -69,8 +71,8 @@ src/
 
 Criterio de organizacion:
 
-- `features/catalog/presentation`: componentes especificos de catalogo (`ProductCard`, `ProductGrid`, `ProductDetail`, `EmptyResults`).
-- `components`: componentes transversales (`Header`, `SearchForm`, `PageShell`, `Logo`, `Container`).
+- `features/catalog/presentation`: componentes especificos de catalogo (`ProductCard`, `ProductGrid`, `ProductDetail`, `EmptyResults`, `CategoryDropdown`).
+- `components`: componentes transversales (`Header`, `SearchForm`, `PageShell`, `Logo`, `Container`, `PaginationControls`).
 
 ## Decisiones tecnicas importantes
 
@@ -115,3 +117,15 @@ Esto evita prerender estatico de esas paginas y mantiene render server-side on-d
 ### 4) Cache y revalidate
 
 Se usa `fetch` server-side con `next.revalidate` y tags en el cliente HTTP/repositorio para balancear disponibilidad y performance.
+
+### 5) Paginacion y filtros por URL
+Se implemento paginacion y filtros en la URL para que el estado de navegacion sea compartible y consistente.
+Comportamiento implementado:
+- Home:
+  - `/?page=2` para navegar paginas.
+  - `/?category=smartphones` para filtrar.
+  - combinacion: `/?category=smartphones&page=2`.
+- Search:
+  - `/search?s=phone&page=2`.
+  - si `s` no esta presente o esta vacio, `/search` muestra el listado general paginado.
+La paginacion se resuelve desde el repositorio con `limit + skip`, devolviendo metadatos (`currentPage`, `totalPages`, `total`) para construir los controles de navegacion.
