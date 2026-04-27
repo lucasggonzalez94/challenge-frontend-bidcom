@@ -29,7 +29,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const paginatedProducts =
     searchMode.type === "empty"
-      ? { items: [], total: 0, limit: PRODUCTS_LIMIT, skip: 0, currentPage: 1, totalPages: 1 }
+      ? await dummyJsonProductRepository.getInitialProductsPage(PRODUCTS_LIMIT, currentPage)
       : searchMode.type === "category"
         ? await dummyJsonProductRepository.getProductsByCategoryPage(
             searchMode.category.slug,
@@ -47,7 +47,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <p className="text-sm text-slate-700">
         {searchTerm
           ? `Resultados para "${searchTerm}" (${paginatedProducts.total})`
-          : "Ingresa un termino para buscar productos."}
+          : `Mostrando ${paginatedProducts.items.length} de ${paginatedProducts.total} productos`}
       </p>
 
       {paginatedProducts.items.length > 0 ? (
@@ -57,7 +57,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             currentPage={paginatedProducts.currentPage}
             totalPages={paginatedProducts.totalPages}
             basePath="/search"
-            query={{ s: searchTerm }}
+            query={searchTerm ? { s: searchTerm } : undefined}
           />
         </>
       ) : (
