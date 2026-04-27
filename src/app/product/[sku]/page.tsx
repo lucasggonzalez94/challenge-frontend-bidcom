@@ -7,13 +7,9 @@ import { ProductDetail } from "@/features/catalog/presentation/product-detail";
 export const dynamic = "force-dynamic";
 
 type ProductDetailPageProps = {
-  params:
-    | Promise<{
-        sku: string;
-      }>
-    | {
-        sku: string;
-      };
+  params: Promise<{
+    sku: string;
+  }>;
 };
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {

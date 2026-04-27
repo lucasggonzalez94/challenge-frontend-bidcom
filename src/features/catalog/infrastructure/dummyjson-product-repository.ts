@@ -2,6 +2,7 @@ import "server-only";
 
 import type { ProductRepository } from "@/features/catalog/domain/product-repository";
 import type { Category } from "@/features/catalog/domain/category";
+import type { PaginatedProducts } from "@/features/catalog/domain/paginated-products";
 import type { Product } from "@/features/catalog/domain/product";
 
 import { getDummyJson } from "./dummyjson-client";
@@ -26,10 +27,33 @@ function toLimitedProductsPath(path: string, limit: number): string {
   return `${path}${path.includes("?") ? "&" : "?"}limit=${limit}`;
 }
 
+function toPaginatedProductsPath(path: string, limit: number, page: number): string {
+  const currentPage = Math.max(page, 1);
+  const skip = (currentPage - 1) * limit;
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}limit=${limit}&skip=${skip}`;
+}
+
+function toPaginatedResult(
+  response: DummyJsonProductsResponseDto,
+  requestedPage: number,
+): PaginatedProducts {
+  const totalPages = Math.max(Math.ceil(response.total / response.limit), 1);
+
+  return {
+    items: mapDummyJsonProductsResponseToDomain(response),
+    total: response.total,
+    limit: response.limit,
+    skip: response.skip,
+    currentPage: Math.max(requestedPage, 1),
+    totalPages,
+  };
+}
+
 class DummyJsonProductRepository implements ProductRepository {
-  async getInitialProducts(limit: number): Promise<Product[]> {
+  async getInitialProductsPage(limit: number, page: number): Promise<PaginatedProducts> {
     const response = await getDummyJson<DummyJsonProductsResponseDto>(
-      toLimitedProductsPath("/products", limit),
+      toPaginatedProductsPath("/products", limit, page),
       {
         next: {
           revalidate: REVALIDATE_PRODUCTS_SECONDS,
@@ -38,12 +62,20 @@ class DummyJsonProductRepository implements ProductRepository {
       },
     );
 
-    return mapDummyJsonProductsResponseToDomain(response);
+    return toPaginatedResult(response, page);
   }
 
-  async searchProducts(term: string, limit: number): Promise<Product[]> {
+  async searchProductsPage(
+    term: string,
+    limit: number,
+    page: number,
+  ): Promise<PaginatedProducts> {
     const response = await getDummyJson<DummyJsonProductsResponseDto>(
-      toLimitedProductsPath(`/products/search?q=${encodeURIComponent(term)}`, limit),
+      toPaginatedProductsPath(
+        `/products/search?q=${encodeURIComponent(term)}`,
+        limit,
+        page,
+      ),
       {
         next: {
           revalidate: REVALIDATE_PRODUCTS_SECONDS,
@@ -52,12 +84,20 @@ class DummyJsonProductRepository implements ProductRepository {
       },
     );
 
-    return mapDummyJsonProductsResponseToDomain(response);
+    return toPaginatedResult(response, page);
   }
 
-  async getProductsByCategory(slug: string, limit: number): Promise<Product[]> {
+  async getProductsByCategoryPage(
+    slug: string,
+    limit: number,
+    page: number,
+  ): Promise<PaginatedProducts> {
     const response = await getDummyJson<DummyJsonProductsResponseDto>(
-      toLimitedProductsPath(`/products/category/${encodeURIComponent(slug)}`, limit),
+      toPaginatedProductsPath(
+        `/products/category/${encodeURIComponent(slug)}`,
+        limit,
+        page,
+      ),
       {
         next: {
           revalidate: REVALIDATE_PRODUCTS_SECONDS,
@@ -66,7 +106,7 @@ class DummyJsonProductRepository implements ProductRepository {
       },
     );
 
-    return mapDummyJsonProductsResponseToDomain(response);
+    return toPaginatedResult(response, page);
   }
 
   async getCategories(): Promise<Category[]> {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeSearchTerm } from "@/lib/normalize";
+import { normalizePageParam, normalizeSearchTerm } from "@/lib/normalize";
 
 describe("normalizeSearchTerm", () => {
   it("returns empty string for undefined", () => {
@@ -17,5 +17,21 @@ describe("normalizeSearchTerm", () => {
 
   it("uses the first value when query param is array", () => {
     expect(normalizeSearchTerm(["  camera  ", "phone"])).toBe("camera");
+  });
+});
+
+describe("normalizePageParam", () => {
+  it("returns 1 when value is undefined", () => {
+    expect(normalizePageParam(undefined)).toBe(1);
+  });
+
+  it("returns 1 for invalid values", () => {
+    expect(normalizePageParam("abc")).toBe(1);
+    expect(normalizePageParam("0")).toBe(1);
+    expect(normalizePageParam("-2")).toBe(1);
+  });
+
+  it("parses a valid page number", () => {
+    expect(normalizePageParam("3")).toBe(3);
   });
 });

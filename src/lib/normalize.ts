@@ -7,3 +7,14 @@ export function normalizeSearchTerm(
 
   return value?.trim()?.toLowerCase() ?? "";
 }
+
+export function normalizePageParam(value: string | string[] | undefined): number {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  const parsedValue = Number.parseInt(rawValue ?? "1", 10);
+
+  if (Number.isNaN(parsedValue) || parsedValue < 1) {
+    return 1;
+  }
+
+  return parsedValue;
+}
