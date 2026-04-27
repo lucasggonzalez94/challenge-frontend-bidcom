@@ -1,5 +1,4 @@
-import { Container } from "@/components/container";
-import { Header } from "@/components/header";
+import { PageShell } from "@/components/page-shell";
 import { dummyJsonProductRepository } from "@/features/catalog/infrastructure/dummyjson-product-repository";
 import { EmptyResults } from "@/features/catalog/presentation/empty-results";
 import { ProductGrid } from "@/features/catalog/presentation/product-grid";
@@ -39,23 +38,18 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       : await dummyJsonProductRepository.searchProducts(searchTerm, PRODUCTS_LIMIT);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header searchTerm={searchTerm} />
-      <main className="py-6 sm:py-8">
-        <Container className="space-y-4">
-          <p className="text-sm text-slate-700">
-            {searchTerm
-              ? `Resultados para "${searchTerm}" (${products.length})`
-              : "Ingresa un termino para buscar productos."}
-          </p>
+    <PageShell searchTerm={searchTerm} containerClassName="space-y-4">
+      <p className="text-sm text-slate-700">
+        {searchTerm
+          ? `Resultados para "${searchTerm}" (${products.length})`
+          : "Ingresa un termino para buscar productos."}
+      </p>
 
-          {products.length > 0 ? (
-            <ProductGrid products={products} />
-          ) : (
-            <EmptyResults categories={recommendedCategories} />
-          )}
-        </Container>
-      </main>
-    </div>
+      {products.length > 0 ? (
+        <ProductGrid products={products} />
+      ) : (
+        <EmptyResults categories={recommendedCategories} />
+      )}
+    </PageShell>
   );
 }
