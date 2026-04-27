@@ -1,4 +1,5 @@
 import { PageShell } from "@/components/page-shell";
+import { resolveSearchMode } from "@/features/catalog/application/resolve-search-mode";
 import { dummyJsonProductRepository } from "@/features/catalog/infrastructure/dummyjson-product-repository";
 import { EmptyResults } from "@/features/catalog/presentation/empty-results";
 import { ProductGrid } from "@/features/catalog/presentation/product-grid";
@@ -23,19 +24,17 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const categories = await dummyJsonProductRepository.getCategories();
   const recommendedCategories = categories.slice(0, RECOMMENDED_CATEGORIES_LIMIT);
+  const searchMode = resolveSearchMode(searchTerm, categories);
 
-  const matchedCategory = categories.find(
-    (category) => category.slug.toLowerCase() === searchTerm,
-  );
-
-  const products = !searchTerm
-    ? []
-    : matchedCategory
-      ? await dummyJsonProductRepository.getProductsByCategory(
-          matchedCategory.slug,
-          PRODUCTS_LIMIT,
-        )
-      : await dummyJsonProductRepository.searchProducts(searchTerm, PRODUCTS_LIMIT);
+  const products =
+    searchMode.type === "empty"
+      ? []
+      : searchMode.type === "category"
+        ? await dummyJsonProductRepository.getProductsByCategory(
+            searchMode.category.slug,
+            PRODUCTS_LIMIT,
+          )
+        : await dummyJsonProductRepository.searchProducts(searchMode.term, PRODUCTS_LIMIT);
 
   return (
     <PageShell searchTerm={searchTerm} containerClassName="space-y-4">
