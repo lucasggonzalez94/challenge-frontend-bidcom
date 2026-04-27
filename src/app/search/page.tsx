@@ -8,6 +8,8 @@ import { normalizeSearchTerm } from "@/lib/normalize";
 const PRODUCTS_LIMIT = 20;
 const RECOMMENDED_CATEGORIES_LIMIT = 5;
 
+export const dynamic = "force-dynamic";
+
 type SearchPageProps = {
   searchParams?:
     | Promise<{
