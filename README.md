@@ -1,36 +1,117 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Challenge Frontend Bidcom
 
-## Getting Started
+Aplicacion ecommerce construida con Next.js (App Router), TypeScript y Tailwind CSS, consumiendo productos desde DummyJSON.
 
-First, run the development server:
+## Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Vitest + Testing Library + MSW
+
+## Requisitos
+
+- Node.js 20+
+- npm 10+
+
+## Instalacion
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Comandos
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `npm run dev`: levanta entorno local en `http://localhost:3000`
+- `npm run build`: compila para produccion
+- `npm run start`: ejecuta build de produccion
+- `npm run lint`: corre ESLint
+- `npm run test`: ejecuta tests una vez (Vitest)
+- `npm run test:watch`: ejecuta tests en modo watch
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Funcionalidades implementadas
 
-## Learn More
+- Home (`/`) con listado de 20 productos.
+- Header con logo de Bidcom y buscador.
+- Busqueda por URL (`/search?s=...`) via formulario GET.
+- Resolucion de busqueda por termino libre y por categoria.
+- Empty state con mensaje y 5 categorias recomendadas.
+- Detalle de producto por SKU (`/product/[sku]`).
+- Pagina `not-found` personalizada.
+- Pagina `error` global personalizada.
+- `loading` global con skeletons.
 
-To learn more about Next.js, take a look at the following resources:
+## Arquitectura
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Se uso una **Clean Architecture liviana por feature**, centrada en `catalog`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```text
+src/
+  app/
+    page.tsx
+    search/page.tsx
+    product/[sku]/page.tsx
+    not-found.tsx
+    error.tsx
+    loading.tsx
 
-## Deploy on Vercel
+  features/catalog/
+    domain/
+    application/
+    infrastructure/
+    presentation/
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+  components/
+  lib/
+  test/
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Criterio de organizacion:
+
+- `features/catalog/presentation`: componentes especificos de catalogo (`ProductCard`, `ProductGrid`, `ProductDetail`, `EmptyResults`).
+- `components`: componentes transversales (`Header`, `SearchForm`, `PageShell`, `Logo`, `Container`).
+
+## Decisiones tecnicas importantes
+
+### 1) Categorias en `/search?s=...`
+
+El enunciado pide links de categoria a `/search?s=$categoria`. Sin embargo, DummyJSON no siempre devuelve resultados consistentes usando solo `products/search?q=...` con slugs de categoria.
+
+Resolucion implementada:
+
+- Si `s` coincide con un slug de categoria, se usa `GET /products/category/:slug?limit=20`.
+- Si no coincide, se usa `GET /products/search?q=:term&limit=20`.
+
+Esto mantiene la URL requerida y evita falsos vacios por limitaciones del endpoint de busqueda.
+
+### 2) Detalle por SKU sin endpoint directo
+
+DummyJSON no expone un endpoint por SKU.
+
+Resolucion implementada:
+
+- El repositorio trae productos y resuelve `getProductBySku(sku)` en servidor comparando por campo `sku`.
+- Si no existe coincidencia, la ruta usa `notFound()`.
+
+### 3) Rutas dinamicas para evitar fallos de build por rate-limit
+
+Durante `next build`, se hacían requests a DummyJSON y devolvía `429 Too Many Requests`.
+
+Por este motivo, se definieron estas rutas como dinamicas:
+
+- `src/app/page.tsx`
+- `src/app/search/page.tsx`
+- `src/app/product/[sku]/page.tsx`
+
+Con:
+
+```ts
+export const dynamic = "force-dynamic";
+```
+
+Esto evita prerender estatico de esas paginas y mantiene render server-side on-demand.
+
+### 4) Cache y revalidate
+
+Se usa `fetch` server-side con `next.revalidate` y tags en el cliente HTTP/repositorio para balancear disponibilidad y performance.
