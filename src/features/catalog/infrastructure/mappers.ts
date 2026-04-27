@@ -4,7 +4,7 @@ import type { Product } from "@/features/catalog/domain/product";
 import type {
   DummyJsonCategoryDto,
   DummyJsonProductDto,
-} from "./dummyjson.types";
+} from "./dummyjson-dto";
 
 export function mapDummyJsonProductToDomain(
   product: DummyJsonProductDto,

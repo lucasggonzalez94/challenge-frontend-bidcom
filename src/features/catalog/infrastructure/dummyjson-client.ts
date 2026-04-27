@@ -10,11 +10,16 @@ type NextFetchInit = RequestInit & {
   };
 };
 
+function toDummyJsonUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${DUMMYJSON_BASE_URL}${normalizedPath}`;
+}
+
 export async function getDummyJson<T>(
   path: string,
   init?: NextFetchInit,
 ): Promise<T> {
-  const response = await fetch(`${DUMMYJSON_BASE_URL}${path}`, {
+  const response = await fetch(toDummyJsonUrl(path), {
     ...init,
     next: {
       revalidate: DEFAULT_REVALIDATE_SECONDS,
