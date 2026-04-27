@@ -4,6 +4,7 @@ import type { Product } from "@/features/catalog/domain/product";
 import type {
   DummyJsonCategoryDto,
   DummyJsonProductDto,
+  DummyJsonProductsResponseDto,
 } from "./dummyjson-dto";
 
 export function mapDummyJsonProductToDomain(
@@ -16,10 +17,16 @@ export function mapDummyJsonProductToDomain(
     description: product.description,
     price: product.price,
     category: product.category,
-    brand: product.brand ?? "",
+    brand: product.brand ?? null,
     thumbnail: product.thumbnail,
     images: product.images,
   };
+}
+
+export function mapDummyJsonProductsResponseToDomain(
+  response: DummyJsonProductsResponseDto,
+): Product[] {
+  return response.products.map(mapDummyJsonProductToDomain);
 }
 
 export function mapDummyJsonCategoryToDomain(
@@ -30,4 +37,10 @@ export function mapDummyJsonCategoryToDomain(
     name: category.name,
     url: category.url,
   };
+}
+
+export function mapDummyJsonCategoriesToDomain(
+  categories: DummyJsonCategoryDto[],
+): Category[] {
+  return categories.map(mapDummyJsonCategoryToDomain);
 }
