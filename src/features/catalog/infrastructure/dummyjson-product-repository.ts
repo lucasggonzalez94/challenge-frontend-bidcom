@@ -1,9 +1,11 @@
 import "server-only";
 
-import type { ProductRepository } from "@/features/catalog/domain/product-repository";
+import type { CatalogListingRepository } from "@/features/catalog/domain/catalog-listing-repository";
 import type { Category } from "@/features/catalog/domain/category";
+import type { CategoryRepository } from "@/features/catalog/domain/category-repository";
 import type { PaginatedProducts } from "@/features/catalog/domain/paginated-products";
 import type { Product } from "@/features/catalog/domain/product";
+import type { ProductDetailRepository } from "@/features/catalog/domain/product-detail-repository";
 
 import { getDummyJson } from "./dummyjson-client";
 import type {
@@ -34,23 +36,25 @@ function toPaginatedProductsPath(path: string, limit: number, page: number): str
   return `${path}${separator}limit=${limit}&skip=${skip}`;
 }
 
-function toPaginatedResult(
-  response: DummyJsonProductsResponseDto,
-  requestedPage: number,
-): PaginatedProducts {
-  const totalPages = Math.max(Math.ceil(response.total / response.limit), 1);
+function toPaginatedResult(response: DummyJsonProductsResponseDto): PaginatedProducts {
+  const normalizedLimit = response.limit > 0 ? response.limit : 1;
+  const totalPages = Math.max(Math.ceil(response.total / normalizedLimit), 1);
+  const calculatedPage = Math.floor(response.skip / normalizedLimit) + 1;
+  const currentPage = Math.min(Math.max(calculatedPage, 1), totalPages);
 
   return {
     items: mapDummyJsonProductsResponseToDomain(response),
     total: response.total,
-    limit: response.limit,
+    limit: normalizedLimit,
     skip: response.skip,
-    currentPage: Math.max(requestedPage, 1),
+    currentPage,
     totalPages,
   };
 }
 
-class DummyJsonProductRepository implements ProductRepository {
+class DummyJsonProductRepository
+  implements CatalogListingRepository, CategoryRepository, ProductDetailRepository
+{
   async getInitialProductsPage(limit: number, page: number): Promise<PaginatedProducts> {
     const response = await getDummyJson<DummyJsonProductsResponseDto>(
       toPaginatedProductsPath("/products", limit, page),
@@ -62,7 +66,7 @@ class DummyJsonProductRepository implements ProductRepository {
       },
     );
 
-    return toPaginatedResult(response, page);
+    return toPaginatedResult(response);
   }
 
   async searchProductsPage(
@@ -84,7 +88,7 @@ class DummyJsonProductRepository implements ProductRepository {
       },
     );
 
-    return toPaginatedResult(response, page);
+    return toPaginatedResult(response);
   }
 
   async getProductsByCategoryPage(
@@ -106,7 +110,7 @@ class DummyJsonProductRepository implements ProductRepository {
       },
     );
 
-    return toPaginatedResult(response, page);
+    return toPaginatedResult(response);
   }
 
   async getCategories(): Promise<Category[]> {
@@ -121,11 +125,6 @@ class DummyJsonProductRepository implements ProductRepository {
     );
 
     return mapDummyJsonCategoriesToDomain(categories);
-  }
-
-  async getRecommendedCategories(limit: number): Promise<Category[]> {
-    const categories = await this.getCategories();
-    return categories.slice(0, limit);
   }
 
   async getProductBySku(sku: string): Promise<Product | null> {
@@ -164,5 +163,4 @@ class DummyJsonProductRepository implements ProductRepository {
   }
 }
 
-export const dummyJsonProductRepository: ProductRepository =
-  new DummyJsonProductRepository();
+export const dummyJsonProductRepository = new DummyJsonProductRepository();

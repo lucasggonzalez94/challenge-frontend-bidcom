@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 
 import { PageShell } from "@/components/page-shell";
-import { dummyJsonProductRepository } from "@/features/catalog/infrastructure/dummyjson-product-repository";
+import { getCatalogDependencies } from "@/features/catalog/application/dependencies";
+import { getProductDetailViewModel } from "@/features/catalog/application/get-product-detail-view-model";
 import { ProductDetail } from "@/features/catalog/presentation/product-detail";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     notFound();
   }
 
-  const product = await dummyJsonProductRepository.getProductBySku(sku);
+  const dependencies = getCatalogDependencies();
+  const product = await getProductDetailViewModel(sku, dependencies);
 
   if (!product) {
     notFound();

@@ -1,6 +1,7 @@
 import { PaginationControls } from "@/components/pagination-controls";
 import { PageShell } from "@/components/page-shell";
-import { dummyJsonProductRepository } from "@/features/catalog/infrastructure/dummyjson-product-repository";
+import { getCatalogDependencies } from "@/features/catalog/application/dependencies";
+import { getHomeCatalogViewModel } from "@/features/catalog/application/get-home-catalog-view-model";
 import { CategoryDropdown } from "@/features/catalog/presentation/category-dropdown";
 import { ProductGrid } from "@/features/catalog/presentation/product-grid";
 import { normalizePageParam, normalizeSearchTerm } from "@/lib/normalize";
@@ -21,33 +22,37 @@ export default async function Home({ searchParams }: HomePageProps) {
   const currentPage = normalizePageParam(resolvedSearchParams?.page);
   const selectedCategoryQuery = normalizeSearchTerm(resolvedSearchParams?.category);
 
-  const categories = await dummyJsonProductRepository.getCategories();
-  const matchedCategory = categories.find(
-    (category) => category.slug.toLowerCase() === selectedCategoryQuery,
+  const dependencies = getCatalogDependencies();
+  const homeViewModel = await getHomeCatalogViewModel(
+    {
+      page: currentPage,
+      categoryQuery: selectedCategoryQuery,
+      productsLimit: PRODUCTS_LIMIT,
+    },
+    dependencies,
   );
-
-  const paginatedProducts = matchedCategory
-    ? await dummyJsonProductRepository.getProductsByCategoryPage(
-        matchedCategory.slug,
-        PRODUCTS_LIMIT,
-        currentPage,
-      )
-    : await dummyJsonProductRepository.getInitialProductsPage(PRODUCTS_LIMIT, currentPage);
 
   return (
     <PageShell containerClassName="space-y-4">
-      <CategoryDropdown categories={categories} selectedCategorySlug={matchedCategory?.slug} />
+      <CategoryDropdown
+        categories={homeViewModel.categories}
+        selectedCategorySlug={homeViewModel.selectedCategory?.slug}
+      />
       <p className="text-sm text-slate-700">
-        {matchedCategory
-          ? `Categoria: ${matchedCategory.name}. Mostrando ${paginatedProducts.items.length} de ${paginatedProducts.total} productos`
-          : `Mostrando ${paginatedProducts.items.length} de ${paginatedProducts.total} productos`}
+        {homeViewModel.selectedCategory
+          ? `Categoria: ${homeViewModel.selectedCategory.name}. Mostrando ${homeViewModel.paginatedProducts.items.length} de ${homeViewModel.paginatedProducts.total} productos`
+          : `Mostrando ${homeViewModel.paginatedProducts.items.length} de ${homeViewModel.paginatedProducts.total} productos`}
       </p>
-      <ProductGrid products={paginatedProducts.items} />
+      <ProductGrid products={homeViewModel.paginatedProducts.items} />
       <PaginationControls
-        currentPage={paginatedProducts.currentPage}
-        totalPages={paginatedProducts.totalPages}
+        currentPage={homeViewModel.paginatedProducts.currentPage}
+        totalPages={homeViewModel.paginatedProducts.totalPages}
         basePath="/"
-        query={matchedCategory ? { category: matchedCategory.slug } : undefined}
+        query={
+          homeViewModel.selectedCategory
+            ? { category: homeViewModel.selectedCategory.slug }
+            : undefined
+        }
       />
     </PageShell>
   );

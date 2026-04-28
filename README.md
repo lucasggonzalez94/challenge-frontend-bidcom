@@ -73,6 +73,8 @@ Criterio de organizacion:
 
 - `features/catalog/presentation`: componentes especificos de catalogo (`ProductCard`, `ProductGrid`, `ProductDetail`, `EmptyResults`, `CategoryDropdown`).
 - `components`: componentes transversales (`Header`, `SearchForm`, `PageShell`, `Logo`, `Container`, `PaginationControls`).
+- `features/catalog/application`: casos de uso y orquestacion de negocio (las paginas no dependen de infraestructura directa).
+- `features/catalog/domain`: contratos separados por responsabilidad (`CatalogListingRepository`, `CategoryRepository`, `ProductDetailRepository`).
 
 ## Decisiones tecnicas importantes
 
@@ -119,6 +121,7 @@ Esto evita prerender estatico de esas paginas y mantiene render server-side on-d
 Se usa `fetch` server-side con `next.revalidate` y tags en el cliente HTTP/repositorio para balancear disponibilidad y performance.
 
 ### 5) Paginacion y filtros por URL
+
 Se implemento paginacion y filtros en la URL para que el estado de navegacion sea compartible y consistente.
 Comportamiento implementado:
 - Home:

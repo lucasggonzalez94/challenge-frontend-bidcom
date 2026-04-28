@@ -1,7 +1,7 @@
 import { PaginationControls } from "@/components/pagination-controls";
 import { PageShell } from "@/components/page-shell";
-import { resolveSearchMode } from "@/features/catalog/application/resolve-search-mode";
-import { dummyJsonProductRepository } from "@/features/catalog/infrastructure/dummyjson-product-repository";
+import { getCatalogDependencies } from "@/features/catalog/application/dependencies";
+import { getSearchCatalogViewModel } from "@/features/catalog/application/get-search-catalog-view-model";
 import { EmptyResults } from "@/features/catalog/presentation/empty-results";
 import { ProductGrid } from "@/features/catalog/presentation/product-grid";
 import { normalizePageParam, normalizeSearchTerm } from "@/lib/normalize";
@@ -23,45 +23,37 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const searchTerm = normalizeSearchTerm(resolvedSearchParams?.s);
   const currentPage = normalizePageParam(resolvedSearchParams?.page);
 
-  const categories = await dummyJsonProductRepository.getCategories();
-  const recommendedCategories = categories.slice(0, RECOMMENDED_CATEGORIES_LIMIT);
-  const searchMode = resolveSearchMode(searchTerm, categories);
-
-  const paginatedProducts =
-    searchMode.type === "empty"
-      ? await dummyJsonProductRepository.getInitialProductsPage(PRODUCTS_LIMIT, currentPage)
-      : searchMode.type === "category"
-        ? await dummyJsonProductRepository.getProductsByCategoryPage(
-            searchMode.category.slug,
-            PRODUCTS_LIMIT,
-            currentPage,
-          )
-        : await dummyJsonProductRepository.searchProductsPage(
-            searchMode.term,
-            PRODUCTS_LIMIT,
-            currentPage,
-          );
+  const dependencies = getCatalogDependencies();
+  const searchViewModel = await getSearchCatalogViewModel(
+    {
+      searchTerm,
+      page: currentPage,
+      productsLimit: PRODUCTS_LIMIT,
+      recommendedCategoriesLimit: RECOMMENDED_CATEGORIES_LIMIT,
+    },
+    dependencies,
+  );
 
   return (
     <PageShell searchTerm={searchTerm} containerClassName="space-y-4">
       <p className="text-sm text-slate-700">
         {searchTerm
-          ? `Resultados para "${searchTerm}" (${paginatedProducts.total})`
-          : `Mostrando ${paginatedProducts.items.length} de ${paginatedProducts.total} productos`}
+          ? `Resultados para "${searchTerm}" (${searchViewModel.paginatedProducts.total})`
+          : `Mostrando ${searchViewModel.paginatedProducts.items.length} de ${searchViewModel.paginatedProducts.total} productos`}
       </p>
 
-      {paginatedProducts.items.length > 0 ? (
+      {!searchViewModel.shouldShowEmptyState ? (
         <>
-          <ProductGrid products={paginatedProducts.items} />
+          <ProductGrid products={searchViewModel.paginatedProducts.items} />
           <PaginationControls
-            currentPage={paginatedProducts.currentPage}
-            totalPages={paginatedProducts.totalPages}
+            currentPage={searchViewModel.paginatedProducts.currentPage}
+            totalPages={searchViewModel.paginatedProducts.totalPages}
             basePath="/search"
             query={searchTerm ? { s: searchTerm } : undefined}
           />
         </>
       ) : (
-        <EmptyResults categories={recommendedCategories} />
+        <EmptyResults categories={searchViewModel.recommendedCategories} />
       )}
     </PageShell>
   );
